@@ -26,20 +26,20 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                
+
                 // Logo & Header
                 Center(
                   child: Column(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryTeal.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.eco_rounded,
-                          size: 48,
-                          color: AppColors.primaryTeal,
+                      // Gambar Logo APEL dari assets
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset(
+                          'assets/apel.jpg',
+                          width: 90,
+                          height: 90,
+                          fit: BoxFit.cover,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -59,6 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
+                
                 const SizedBox(height: 40),
 
                 const Text(
