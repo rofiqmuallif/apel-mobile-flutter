@@ -7,7 +7,7 @@ void main() {
 }
 
 class ApelApp extends StatelessWidget {
-  const ApelApp({Key? key}) : super(key: key);
+  const ApelApp({super.key});
 
   @override
   Widget build(BuildContext context) {

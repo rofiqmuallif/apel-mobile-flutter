@@ -4,7 +4,7 @@ import '../../models/report_model.dart';
 import 'admin_detail_report_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({Key? key}) : super(key: key);
+  const AdminDashboardScreen({super.key});
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -135,7 +135,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
+                  color: Colors.white.withValues(alpha: 0.18),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
