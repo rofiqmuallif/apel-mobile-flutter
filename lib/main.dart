@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/constants/colors.dart';
-import 'screens/main_navigation_screen.dart';
+import 'screens/auth/login_screen.dart';
 
 void main() {
   runApp(const ApelApp());
@@ -19,7 +19,7 @@ class ApelApp extends StatelessWidget {
         primaryColor: AppColors.primaryTeal,
         fontFamily: 'Plus Jakarta Sans', // Jika sudah memasang font
       ),
-      home: const MainNavigationScreen(),
+      home: const LoginScreen(),
     );
   }
 }
