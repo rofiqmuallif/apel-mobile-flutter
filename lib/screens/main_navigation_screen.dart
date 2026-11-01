@@ -1,32 +1,61 @@
 import 'package:flutter/material.dart';
 import '../core/constants/colors.dart';
 import 'admin/admin_dashboard_screen.dart';
-import 'profile_and_reward_screen.dart';
+import 'auth/login_screen.dart';
+import 'profile/profile_and_reward_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final String userRole; // 'warga' atau 'admin'
+
+  const MainNavigationScreen({super.key, required this.userRole});
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _currentIndex = 2; // Default ke Tab Admin (Punya Rofiq)
+  int _currentIndex = 0;
 
-  // Daftar Layar Utama Aplikasi APEL
-  final List<Widget> _screens = [
-    const PlaceholderLaporScreen(),   // Tab 1: Punya Dika (Form Lapor)
-    const PlaceholderStatusScreen(),  // Tab 2: Punya Deva (Status Tracker)
-    const AdminDashboardScreen(),     // Tab 3: Punya Rofiq (Dashboard Admin)
-    const ProfileAndRewardScreen(),   // Tab 4: Punya Nofal (Koin Kopdes & Profil)
+  // Layar khusus Warga (3 Tab)
+  final List<Widget> _wargaScreens = [
+    const PlaceholderLaporScreen(),
+    const PlaceholderStatusScreen(),
+    const ProfileAndRewardScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    bool isAdmin = widget.userRole == 'admin';
+
+    // JIKA ADMIN: Tampilkan Dashboard Admin langsung dengan tombol Keluar/Logout di AppBar
+    if (isAdmin) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Portal Admin Desa'),
+          backgroundColor: AppColors.primaryNavy,
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'Keluar',
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+            ),
+          ],
+        ),
+        body: const AdminDashboardScreen(),
+      );
+    }
+
+    // JIKA WARGA: Tampilkan 3 Tab Navigasi Utama
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _screens,
+        children: _wargaScreens,
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -53,11 +82,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             label: 'Status',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Admin',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.monetization_on_outlined),
             activeIcon: Icon(Icons.monetization_on),
             label: 'Koin Kopdes',
@@ -69,7 +93,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// TEMPORARY PLACEHOLDERS (Nanti diganti saat Dika, Deva & Nofal selesai push)
+// TEMPORARY PLACEHOLDERS
 // ---------------------------------------------------------------------------
 
 class PlaceholderLaporScreen extends StatelessWidget {
@@ -108,28 +132,6 @@ class PlaceholderStatusScreen extends StatelessWidget {
       body: const Center(
         child: Text(
           'Halaman Status Tracking\n(Sedang dikembangkan oleh Deva)',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textMuted, fontSize: 16),
-        ),
-      ),
-    );
-  }
-}
-
-class PlaceholderKoinScreen extends StatelessWidget {
-  const PlaceholderKoinScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil & Koin Kopdes'),
-        backgroundColor: AppColors.primaryNavy,
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text(
-          'Halaman Koin Kopdes & Profil\n(Sedang dikembangkan oleh Nofal)',
           textAlign: TextAlign.center,
           style: TextStyle(color: AppColors.textMuted, fontSize: 16),
         ),

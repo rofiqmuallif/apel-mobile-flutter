@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
 import '../../models/report_model.dart';
+import '../../services/report_service.dart';
 import 'admin_detail_report_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -11,138 +12,187 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  // State Filter Aktif ('semua', 'baru', 'lapangan', 'selesai')
+  final ReportService _reportService = ReportService();
+  final TextEditingController _searchController = TextEditingController();
+  
   String _selectedFilter = 'semua';
+  String _searchQuery = '';
+  bool _isLoading = true;
+  List<ReportModel> reports = [];
 
-  // Sample data laporan awal
-  List<ReportModel> reports = [
-    ReportModel(
-      id: '#APEL-JTG-0042',
-      title: 'Rongsokan menutup bahu jalan',
-      location: 'Dusun 2 Jatingarang',
-      date: '30 Oktober 2026',
-      disturbanceLevel: 5,
-      status: 'baru',
-      description: 'Tumpukan barang bekas memakan sebagian bahu jalan umum.',
-      imageUrl: 'assets/images/scrap_sample.jpg',
-    ),
-    ReportModel(
-      id: '#APEL-JTG-0041',
-      title: 'Sampah liar di pinggir sungai',
-      location: 'Dusun 1 Jatingarang',
-      date: '29 Oktober 2026',
-      disturbanceLevel: 3,
-      status: 'lapangan',
-      description: 'Ada tumpukan sampah plastik di dekat jembatan.',
-      imageUrl: 'assets/images/scrap_sample.jpg',
-    ),
-    ReportModel(
-      id: '#APEL-JTG-0039',
-      title: 'Limbah rongsok meluber',
-      location: 'Dusun 3 Jatingarang',
-      date: '28 Oktober 2026',
-      disturbanceLevel: 4,
-      status: 'selesai',
-      description: 'Barang rongsokan sudah dirapikan oleh pemilik.',
-      imageUrl: 'assets/images/scrap_sample.jpg',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadReports();
+  }
+
+  // Memuat data laporan dari service
+  Future<void> _loadReports() async {
+    setState(() => _isLoading = true);
+    final data = await _reportService.fetchReports();
+    if (!mounted) return;
+    setState(() {
+      reports = data;
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Hitung jumlah laporan berdasarkan status
     int countBaru = reports.where((r) => r.status == 'baru').length;
     int countProses = reports.where((r) => r.status == 'lapangan').length;
     int countSelesai = reports.where((r) => r.status == 'selesai').length;
 
-    // Filter daftar laporan berdasarkan filter chip yang dipilih
     List<ReportModel> filteredReports = reports.where((report) {
-      if (_selectedFilter == 'semua') return true;
-      return report.status == _selectedFilter;
+      bool matchesFilter = _selectedFilter == 'semua' || report.status == _selectedFilter;
+      bool matchesSearch = report.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          report.id.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          report.location.toLowerCase().contains(_searchQuery.toLowerCase());
+      return matchesFilter && matchesSearch;
     }).toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Header Admin Desa
-              _buildHeader(countBaru),
-              const SizedBox(height: 16),
+        child: RefreshIndicator(
+          color: AppColors.primaryTeal,
 
-              // 2. Ringkasan Kartu Statistik
-              _buildStatCards(countBaru, countProses, countSelesai),
-              const SizedBox(height: 16),
 
-              // 3. Filter Chips
-              _buildFilterChips(),
-              const SizedBox(height: 16),
+          
+          onRefresh: () async {
+          // 1. Simpan messenger sebelum jeda async
+          final messenger = ScaffoldMessenger.of(context);
+          
+          await _loadReports();
+          
+          // 2. Guard pengecekan mounted
+          if (!mounted) return;
+          
+          // 3. Gunakan variabel messenger yang sudah disimpan
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Daftar laporan berhasil diperbarui'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        },
 
-              // 4. Judul Seksi
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Daftar Laporan Masuk',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textMain,
+
+
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Header Admin Desa dengan Lonceng Notifikasi Interaktif
+                _buildHeader(countBaru),
+                const SizedBox(height: 16),
+
+                // 2. Ringkasan Kartu Statistik
+                _buildStatCards(countBaru, countProses, countSelesai),
+                const SizedBox(height: 16),
+
+                // 3. Search Bar
+                TextField(
+                  controller: _searchController,
+                  onChanged: (val) {
+                    setState(() {
+                      _searchQuery = val;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Cari ID, judul, atau lokasi...',
+                    prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.borderLine),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.borderLine),
                     ),
                   ),
-                  Text(
-                    '${filteredReports.length} Laporan',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
+                ),
+                const SizedBox(height: 12),
 
-              // 5. List Laporan Masuk
-              filteredReports.isEmpty
-                  ? Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.borderLine),
+                // 4. Filter Chips
+                _buildFilterChips(),
+                const SizedBox(height: 16),
+
+                // 5. Judul Seksi & Jumlah Laporan
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Daftar Laporan Masuk',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textMain,
                       ),
-                      child: const Column(
-                        children: [
-                          Icon(Icons.inbox_outlined, size: 48, color: AppColors.textMuted),
-                          SizedBox(height: 8),
-                          Text(
-                            'Tidak ada laporan pada kategori ini',
-                            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                    ),
+                    Text(
+                      '${filteredReports.length} Laporan',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // 6. State Loading / List Laporan
+                _isLoading
+                    ? const Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: Center(
+                          child: CircularProgressIndicator(color: AppColors.primaryTeal),
+                        ),
+                      )
+                    : filteredReports.isEmpty
+                        ? Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.borderLine),
+                            ),
+                            child: const Column(
+                              children: [
+                                Icon(Icons.inbox_outlined, size: 48, color: AppColors.textMuted),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Tidak ada laporan yang cocok',
+                                  style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: filteredReports.length,
+                            itemBuilder: (context, index) {
+                              final report = filteredReports[index];
+                              return _buildReportItem(report);
+                            },
                           ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: filteredReports.length,
-                      itemBuilder: (context, index) {
-                        final report = filteredReports[index];
-                        return _buildReportItem(report);
-                      },
-                    ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // Widget Header Admin
+  // Header Admin Desa
   Widget _buildHeader(int notificationCount) {
     return Container(
       padding: const EdgeInsets.all(18.0),
@@ -174,55 +224,123 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ],
           ),
-          // Ikon Lonceng Notifikasi
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.notifications_none,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-              if (notificationCount > 0)
-                Positioned(
-                  right: -2,
-                  top: -2,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: AppColors.statusRed,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 18,
-                      minHeight: 18,
-                    ),
-                    child: Text(
-                      '$notificationCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+          InkWell(
+            onTap: () => _showNotificationBottomSheet(context, notificationCount),
+            borderRadius: BorderRadius.circular(30),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.notifications_none,
+                    color: Colors.white,
+                    size: 24,
                   ),
                 ),
-            ],
+                if (notificationCount > 0)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppColors.statusRed,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        '$notificationCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  // Widget Kartu Statistik
+  // Bottom Sheet Notifikasi
+  void _showNotificationBottomSheet(BuildContext context, int count) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Notifikasi Laporan Baru',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textMain,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const Divider(color: AppColors.borderLine),
+              const SizedBox(height: 8),
+              if (count == 0)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: Text(
+                      'Tidak ada notifikasi laporan baru saat ini.',
+                      style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                    ),
+                  ),
+                )
+              else
+                ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.statusRed.withValues(alpha: 0.15),
+                    child: const Icon(Icons.warning_amber_rounded, color: AppColors.statusRed),
+                  ),
+                  title: Text(
+                    'Ada $count Laporan Baru Membutuhkan Verifikasi!',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                  ),
+                  subtitle: const Text(
+                    'Segera tinjau deskripsi dan lokasi untuk menentukan tindakan lapangan.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildStatCards(int baru, int proses, int selesai) {
     return Row(
       children: [
@@ -281,7 +399,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // Widget Filter Chips
   Widget _buildFilterChips() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -327,7 +444,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // Widget Item Kartu Laporan dengan Badge Status Dinamis
   Widget _buildReportItem(ReportModel report) {
     Color badgeColor;
     String statusText;
@@ -381,7 +497,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header ID & Status Badge Dinamis
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -431,8 +546,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ],
               ),
               const SizedBox(height: 10),
-
-              // Detail Gambar & Lokasi
               Row(
                 children: [
                   Container(

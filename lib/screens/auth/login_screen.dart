@@ -13,6 +13,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isObscure = true;
+  String _selectedRole = 'warga'; // Default masuk sebagai Warga
 
   @override
   Widget build(BuildContext context) {
@@ -26,13 +27,10 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                
-
                 // Logo & Header
                 Center(
                   child: Column(
                     children: [
-                      // Gambar Logo APEL dari assets
                       ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: Image.asset(
@@ -59,8 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-                
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
 
                 const Text(
                   'Masuk Akun',
@@ -70,12 +67,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: AppColors.textMain,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 const Text(
                   'Silakan masuk menggunakan NIK / Email terdaftar',
                   style: TextStyle(color: AppColors.textMuted, fontSize: 13),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Form Email / NIK
                 TextField(
@@ -90,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     fillColor: AppColors.surface,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
                 // Form Password
                 TextField(
@@ -114,15 +111,71 @@ class _LoginScreenState extends State<LoginScreen> {
                     fillColor: AppColors.surface,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
+
+      
+
+
+
+
+                // Pilihan Role (Menggunakan SegmentedButton Modern - Bebas Deprecated Warning)
+                const Text(
+                  'Masuk Sebagai:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: AppColors.textMain,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment<String>(
+                        value: 'warga',
+                        label: Text('Warga'),
+                        icon: Icon(Icons.person_outline),
+                      ),
+                      ButtonSegment<String>(
+                        value: 'admin',
+                        label: Text('Admin Desa'),
+                        icon: Icon(Icons.admin_panel_settings_outlined),
+                      ),
+                    ],
+                    selected: {_selectedRole},
+                    onSelectionChanged: (Set<String> newSelection) {
+                      setState(() {
+                        _selectedRole = newSelection.first;
+                      });
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                        if (states.contains(WidgetState.selected)) {
+                          return AppColors.primaryTeal.withValues(alpha: 0.15);
+                        }
+                        return AppColors.surface;
+                      }),
+                      foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                        if (states.contains(WidgetState.selected)) {
+                          return AppColors.primaryTeal;
+                        }
+                        return AppColors.textMuted;
+                      }),
+                      side: WidgetStateProperty.all(
+                        const BorderSide(color: AppColors.borderLine),
+                      ),
+                    ),
+                  ),
+                ),
+
+
+
+                const SizedBox(height: 16),
 
                 // Tombol Login
                 SizedBox(
                   width: double.infinity,
-
-
-
-                  
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryTeal,
@@ -131,18 +184,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-
-
-
-
-
-
                     onPressed: () {
-                      // Simulasi Pindah ke Halaman Utama setelah Login
+                      // Mengoper parameter userRole ('warga' / 'admin') ke MainNavigationScreen
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const MainNavigationScreen(),
+                          builder: (context) => MainNavigationScreen(userRole: _selectedRole),
                         ),
                       );
                     },
