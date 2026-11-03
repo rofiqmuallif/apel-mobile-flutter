@@ -1,3 +1,4 @@
+import 'package:apel_app/screens/create_report_screen.dart';
 import 'package:flutter/material.dart';
 import '../core/constants/colors.dart';
 import 'admin/admin_dashboard_screen.dart';
@@ -18,7 +19,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   // Layar khusus Warga (3 Tab)
   final List<Widget> _wargaScreens = [
-    const PlaceholderLaporScreen(),
+    const CreateReportScreen(),
     const PlaceholderStatusScreen(),
     const ProfileAndRewardScreen(),
   ];
