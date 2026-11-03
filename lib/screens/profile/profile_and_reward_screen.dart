@@ -18,7 +18,6 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
   String namaUser = 'Warga Desa Jatingarang';
   String lokasiUser = 'Desa Jatingarang';
   Uint8List? _fotoProfil;
-  bool _sedangMengambilLokasi = false;
 
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -103,44 +102,54 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
     );
   }
 
-  Future<void> _ambilLokasi() async {
+  Future<String?> _ambilLokasi() async {
     if (kIsWeb) {
-      _pesan('Untuk fitur alamat otomatis, jalankan aplikasi pada perangkat Android.', error: true);
-      return;
+      _pesan(
+        'Untuk fitur alamat otomatis, jalankan aplikasi pada perangkat Android.',
+        error: true,
+      );
+      return null;
     }
 
-    setState(() => _sedangMengambilLokasi = true);
     try {
       final bool layananAktif = await Geolocator.isLocationServiceEnabled();
       if (!layananAktif) {
         _pesan('GPS perangkat belum aktif. Aktifkan lokasi lalu coba lagi.', error: true);
-        return;
+        return null;
       }
 
       LocationPermission izin = await Geolocator.checkPermission();
       if (izin == LocationPermission.denied) {
         izin = await Geolocator.requestPermission();
       }
+
       if (izin == LocationPermission.denied) {
         _pesan('Izin lokasi ditolak. Izinkan akses lokasi untuk menggunakan GPS.', error: true);
-        return;
+        return null;
       }
+
       if (izin == LocationPermission.deniedForever) {
         _pesan('Izin lokasi ditolak permanen. Aktifkan melalui Pengaturan aplikasi.', error: true);
-        return;
+        return null;
       }
 
       final Position posisi = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
-      String alamat = '${posisi.latitude.toStringAsFixed(5)}, ${posisi.longitude.toStringAsFixed(5)}';
+      // Koordinat tetap menjadi alamat cadangan jika reverse geocoding gagal.
+      String alamat =
+          '${posisi.latitude.toStringAsFixed(5)}, ${posisi.longitude.toStringAsFixed(5)}';
+
       try {
         final geocoding = Geocoding();
         final placemarks = await geocoding.placemarkFromCoordinates(
           posisi.latitude,
           posisi.longitude,
         );
+
         if (placemarks.isNotEmpty) {
           final p = placemarks.first;
           final bagian = <String?>[
@@ -150,78 +159,138 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
             p.subAdministrativeArea,
             p.administrativeArea,
           ].where((v) => v != null && v.trim().isNotEmpty).toList();
-          if (bagian.isNotEmpty) alamat = bagian.join(', ');
+
+          if (bagian.isNotEmpty) {
+            alamat = bagian.join(', ');
+          }
         }
       } catch (_) {
-        // Koordinat tetap ditampilkan jika layanan pengubah koordinat ke alamat gagal.
+        // Jika alamat tidak berhasil diterjemahkan, gunakan koordinat GPS.
       }
 
-      if (!mounted) return;
-      setState(() => lokasiUser = alamat);
-      _pesan('Lokasi berhasil diperbarui.');
-    } catch (e) {
-      _pesan('Gagal mengambil lokasi. Coba periksa GPS dan koneksi internet.', error: true);
-    } finally {
-      if (mounted) setState(() => _sedangMengambilLokasi = false);
+      if (!mounted) return null;
+      return alamat;
+    } catch (_) {
+      if (mounted) {
+        _pesan(
+          'Gagal mengambil lokasi. Coba periksa GPS dan koneksi internet.',
+          error: true,
+        );
+      }
+      return null;
     }
   }
 
   void _bukaDialogEditProfil() {
     final nameController = TextEditingController(text: namaUser);
     final locationController = TextEditingController(text: lokasiUser);
+    bool sedangMengambilLokasi = false;
 
     showDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Edit Profil Warga', style: TextStyle(color: _blue, fontWeight: FontWeight.bold)),
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text(
+            'Edit Profil Warga',
+            style: TextStyle(
+              color: _blue,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Nama & Peran', prefixIcon: Icon(Icons.person_outline)),
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama & Peran',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: locationController,
-                  decoration: const InputDecoration(labelText: 'Lokasi / Desa', prefixIcon: Icon(Icons.location_on_outlined)),
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(
+                    labelText: 'Lokasi / Desa',
+                    prefixIcon: Icon(Icons.location_on_outlined),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: _sedangMengambilLokasi
+                    onPressed: sedangMengambilLokasi
                         ? null
                         : () async {
-                            await _ambilLokasi();
-                            locationController.text = lokasiUser;
-                            setDialogState(() {});
+                            setDialogState(() {
+                              sedangMengambilLokasi = true;
+                            });
+
+                            final alamat = await _ambilLokasi();
+
+                            // Jangan memperbarui dialog jika pengguna sudah menutupnya.
+                            if (!dialogContext.mounted) return;
+
+                            if (alamat != null && alamat.isNotEmpty) {
+                              locationController.text = alamat;
+                            }
+
+                            setDialogState(() {
+                              sedangMengambilLokasi = false;
+                            });
                           },
-                    icon: _sedangMengambilLokasi
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    icon: sedangMengambilLokasi
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Icon(Icons.my_location),
-                    label: Text(_sedangMengambilLokasi ? 'Mengambil lokasi...' : 'Gunakan Lokasi Saya'),
+                    label: Text(
+                      sedangMengambilLokasi
+                          ? 'Mengambil lokasi...'
+                          : 'Gunakan Lokasi Saya',
+                    ),
                   ),
                 ),
                 const SizedBox(height: 4),
                 const Text(
                   'GPS memerlukan izin lokasi dan layanan lokasi perangkat yang aktif.',
-                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey,
+                  ),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Batal'),
+            ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: _blue, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _blue,
+                foregroundColor: Colors.white,
+              ),
               onPressed: () {
+                final namaBaru = nameController.text.trim();
+                final lokasiBaru = locationController.text.trim();
+
+                if (namaBaru.isEmpty || lokasiBaru.isEmpty) {
+                  _pesan('Nama dan lokasi tidak boleh kosong.', error: true);
+                  return;
+                }
+
                 setState(() {
-                  namaUser = nameController.text.trim().isEmpty ? namaUser : nameController.text.trim();
-                  lokasiUser = locationController.text.trim().isEmpty ? lokasiUser : locationController.text.trim();
+                  namaUser = namaBaru;
+                  lokasiUser = lokasiBaru;
                 });
+
                 Navigator.pop(dialogContext);
                 _pesan('Profil berhasil diperbarui.');
               },
