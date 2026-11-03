@@ -30,8 +30,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  image_picker: ^1.0.7
-  geolocator: ^11.0.0
   google_maps_flutter: ^2.6.0   # atau flutter_map: ^6.1.0 jika tanpa API key
   permission_handler: ^11.3.0
 

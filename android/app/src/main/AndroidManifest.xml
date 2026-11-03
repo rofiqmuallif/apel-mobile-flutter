@@ -1,14 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-<<<<<<< HEAD
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-=======
     <!-- Ifandika -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
->>>>>>> dika
 
     <application
         android:label="apel_app"
@@ -27,16 +21,11 @@
 
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
-<<<<<<< HEAD
-                android:resource="@style/NormalTheme"/>
-
-=======
                 android:resource="@style/NormalTheme"
             />
             <meta-data
                 android:name="com.google.android.geo.API_KEY"
                 android:value="YOUR_ACTUAL_API_KEY_HERE" />
->>>>>>> dika
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -55,8 +44,4 @@
             <data android:mimeType="text/plain" />
         </intent>
     </queries>
-<<<<<<< HEAD
-
-=======
->>>>>>> dika
 </manifest>
