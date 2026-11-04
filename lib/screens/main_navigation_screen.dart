@@ -1,9 +1,11 @@
 import 'package:apel_app/screens/create_report_screen.dart';
 import 'package:flutter/material.dart';
+
 import '../core/constants/colors.dart';
 import 'admin/admin_dashboard_screen.dart';
 import 'auth/login_screen.dart';
 import 'profile/profile_and_reward_screen.dart';
+import 'report_status_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final String userRole; // 'warga' atau 'admin'
@@ -20,7 +22,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   // Layar khusus Warga (3 Tab)
   final List<Widget> _wargaScreens = [
     const CreateReportScreen(),
-    const PlaceholderStatusScreen(),
+    const ReportStatusScreen(),
     const ProfileAndRewardScreen(),
   ];
 
@@ -54,10 +56,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
     // JIKA WARGA: Tampilkan 3 Tab Navigasi Utama
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _wargaScreens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _wargaScreens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -69,8 +68,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         unselectedItemColor: AppColors.textMuted,
         backgroundColor: AppColors.surface,
         type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 11,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
+        ),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.add_circle_outline),
