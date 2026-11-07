@@ -3,11 +3,9 @@ import 'dart:io';
 import 'package:apel_app/models/form_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../services/location_service.dart';
 
 class CreateReportScreen extends StatefulWidget {
   const CreateReportScreen({super.key});
@@ -20,21 +18,12 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   final _formKey = GlobalKey<FormState>();
   final _descController = TextEditingController();
   final _imagePicker = ImagePicker();
-  final _locationService = LocationService();
 
   File? _photo;
-  double? _severity;          // null = belum dipilih
-  bool _isLoadingLocation = false;
+  double? _severity;
   bool _isSubmitting = false;
 
-  Position? _position;
-  String? _address;
   GoogleMapController? _mapController;
-
-  static const _defaultCamera = CameraPosition(
-    target: LatLng(-6.200000, 106.816666), // Jakarta default
-    zoom: 16,
-  );
 
   @override
   void dispose() {
@@ -105,34 +94,10 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     );
   }
 
-  // // ============ GEOLOCATION ============
-  // Future<void> _detectLocation() async {
-  //   setState(() => _isLoadingLocation = true);
-  //   try {
-  //     final result = await _locationService.getCurrentLocation();
-  //     if (result == null) {
-  //       _showSnack('Gagal mendeteksi lokasi. Pastikan GPS aktif & izin diberikan.');
-  //       return;
-  //     }
-  //     setState(() {
-  //       _position = result.position;
-  //       _address = result.address;
-  //     });
-  //     _mapController?.animateCamera(
-  //       CameraUpdate.newLatLng(
-  //         LatLng(result.position.latitude, result.position.longitude),
-  //       ),
-  //     );
-  //   } finally {
-  //     if (mounted) setState(() => _isLoadingLocation = false);
-  //   }
-  // }
-
   // ============ SUBMIT ============
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
 
-    // Validasi skala gangguan
     if (_severity == null) {
       _showSnack('Silakan pilih skala gangguan terlebih dahulu.',
           color: Colors.orange.shade800);
@@ -143,23 +108,14 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       _showSnack('Mohon unggah foto kejadian.', color: Colors.orange.shade800);
       return;
     }
-    // if (_position == null) {
-    //   _showSnack('Lokasi belum terdeteksi. Tekan "Deteksi Lokasi".',
-    //       color: Colors.orange.shade800);
-    //   return;
-    // }
 
     setState(() => _isSubmitting = true);
     final formModel = FormModel(
       photo: _photo,
       severityScale: _severity!.round(),
       description: _descController.text.trim(),
-      // latitude: _position!.latitude,
-      // longitude: _position!.longitude,
-      // address: _address,
     );
 
-    // TODO: kirim ke API / repository
     await Future.delayed(const Duration(seconds: 1)); // simulasi
 
     // if (!mounted) return;
@@ -411,109 +367,6 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       ),
     );
   }
-
-  // --- Lokasi + Peta ---
-  // Widget _buildLocationSection() {
-  //   return _SectionCard(
-  //     icon: Icons.location_on_outlined,
-  //     title: 'Lokasi Kejadian',
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.stretch,
-  //       children: [
-  //         Container(
-  //           height: 180,
-  //           decoration: BoxDecoration(
-  //             borderRadius: BorderRadius.circular(12),
-  //             border: Border.all(color: Colors.grey.shade300),
-  //           ),
-  //           clipBehavior: Clip.antiAlias,
-  //           child: _position == null
-  //               ? Container(
-  //                   color: Colors.grey.shade100,
-  //                   child: Column(
-  //                     mainAxisAlignment: MainAxisAlignment.center,
-  //                     children: [
-  //                       Icon(Icons.map_outlined,
-  //                           size: 40, color: Colors.grey.shade500),
-  //                       const SizedBox(height: 8),
-  //                       Text('Lokasi belum terdeteksi',
-  //                           style: TextStyle(color: Colors.grey.shade600)),
-  //                     ],
-  //                   ),
-  //                 )
-  //               : GoogleMap(
-  //                   initialCameraPosition: CameraPosition(
-  //                     target: LatLng(_position!.latitude, _position!.longitude),
-  //                     zoom: 16,
-  //                   ),
-  //                   onMapCreated: (c) => _mapController = c,
-  //                   markers: {
-  //                     Marker(
-  //                       markerId: const MarkerId('report'),
-  //                       position: LatLng(_position!.latitude, _position!.longitude),
-  //                     ),
-  //                   },
-  //                   myLocationEnabled: false,
-  //                   zoomControlsEnabled: false,
-  //                 ),
-  //         ),
-  //         const SizedBox(height: 12),
-  //         if (_address != null)
-  //           Container(
-  //             padding: const EdgeInsets.all(12),
-  //             decoration: BoxDecoration(
-  //               color: Colors.blue.shade50,
-  //               borderRadius: BorderRadius.circular(8),
-  //             ),
-  //             child: Row(
-  //               crossAxisAlignment: CrossAxisAlignment.start,
-  //               children: [
-  //                 Icon(Icons.place, size: 18, color: Colors.blue.shade700),
-  //                 const SizedBox(width: 8),
-  //                 Expanded(
-  //                   child: Column(
-  //                     crossAxisAlignment: CrossAxisAlignment.start,
-  //                     children: [
-  //                       Text(_address!,
-  //                           style: TextStyle(
-  //                               fontSize: 13, color: Colors.blue.shade900)),
-  //                       if (_position != null)
-  //                         Text(
-  //                           '${_position!.latitude.toStringAsFixed(6)}, '
-  //                           '${_position!.longitude.toStringAsFixed(6)}',
-  //                           style: TextStyle(
-  //                               fontSize: 11, color: Colors.grey.shade600),
-  //                         ),
-  //                     ],
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         const SizedBox(height: 12),
-  //         OutlinedButton.icon(
-  //           onPressed: _isLoadingLocation ? null : _detectLocation,
-  //           icon: _isLoadingLocation
-  //               ? const SizedBox(
-  //                   width: 16,
-  //                   height: 16,
-  //                   child: CircularProgressIndicator(strokeWidth: 2))
-  //               : const Icon(Icons.my_location),
-  //           label: Text(_isLoadingLocation
-  //               ? 'Mendeteksi lokasi...'
-  //               : _position == null
-  //                   ? 'Deteksi Lokasi Otomatis'
-  //                   : 'Perbarui Lokasi'),
-  //           style: OutlinedButton.styleFrom(
-  //             padding: const EdgeInsets.symmetric(vertical: 14),
-  //             shape: RoundedRectangleBorder(
-  //                 borderRadius: BorderRadius.circular(12)),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   // --- Tombol Submit ---
   Widget _buildSubmitButton() {
