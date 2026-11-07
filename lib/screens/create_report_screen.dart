@@ -24,7 +24,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
 
   File? _photo;
   double? _severity;          // null = belum dipilih
-  bool _isLoadingLocation = false;
+  final bool _isLoadingLocation = false;
   bool _isSubmitting = false;
 
   Position? _position;

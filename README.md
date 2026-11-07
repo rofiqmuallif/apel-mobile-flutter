@@ -6,7 +6,7 @@ Aplikasi mobile berbasis Flutter untuk pelaporan masalah lingkungan desa (khusus
 * **Rofiq Muallif** (242520020) - Lead Developer & Admin Dashboard Specialist
 * **Maulana Ifandika / Dika** (242520060) - Mobile Feature Specialist (Form Lapor, Camera & GPS)
 * **Deva Aditya Lazuardi** (242520027) - Backend Engineer & Status Tracking Integration
-* **Nofal** (24252002) - System Analyst, QA Testing & Koin Kopdes Module
+* **Nofal** (242520002) - System Analyst, QA Testing & Koin Kopdes Module
 
 ## 📱 Fitur Utama (MVP & Development)
 * **Autentikasi User**: Login & Register Multi-Role (Warga & Admin Desa)
