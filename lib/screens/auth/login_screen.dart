@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/colors.dart';
+import '../../services/auth_service.dart';
 import '../main_navigation_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,7 +15,49 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isObscure = true;
+  bool _isLoading = false;
   String _selectedRole = 'warga'; // Default masuk sebagai Warga
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('NIK/Email dan Kata Sandi wajib diisi')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final result = await AuthService().login(
+      identifier: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result['success']) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainNavigationScreen(
+            userRole: result['role'] ?? _selectedRole,
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message']), backgroundColor: Colors.red),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,17 +71,39 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Logo & Header
+                // Logo & Header APEL
                 Center(
                   child: Column(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.asset(
-                          'assets/apel.jpg',
-                          width: 90,
-                          height: 90,
-                          fit: BoxFit.cover,
+                      Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.asset(
+                            'assets/images/logo_apel.jpg',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: AppColors.primaryTeal.withValues(alpha: 0.1),
+                                child: const Icon(
+                                  Icons.eco_rounded,
+                                  size: 48,
+                                  color: AppColors.primaryTeal,
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -113,12 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 14),
 
-      
-
-
-
-
-                // Pilihan Role (Menggunakan SegmentedButton Modern - Bebas Deprecated Warning)
+                // Pilihan Role (SegmentedButton)
                 const Text(
                   'Masuk Sebagai:',
                   style: TextStyle(
@@ -169,9 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-
-
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
                 // Tombol Login
                 SizedBox(
@@ -184,24 +243,51 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {
-                      // Mengoper parameter userRole ('warga' / 'admin') ke MainNavigationScreen
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MainNavigationScreen(userRole: _selectedRole),
+                    onPressed: _isLoading ? null : _handleLogin,
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Masuk',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Belum punya akun? ',
+                      style: TextStyle(color: AppColors.textMuted),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                        );
+                      },
+                      child: const Text(
+                        'Daftar di sini',
+                        style: TextStyle(
+                          color: AppColors.primaryTeal,
+                          fontWeight: FontWeight.bold,
                         ),
-                      );
-                    },
-                    child: const Text(
-                      'Masuk',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
