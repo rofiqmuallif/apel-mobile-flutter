@@ -3,19 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:apel_app/services/report_service.dart';
 import '../auth/login_screen.dart';
 
 class ProfileAndRewardScreen extends StatefulWidget {
   const ProfileAndRewardScreen({super.key});
 
   @override
-  State<ProfileAndRewardScreen> createState() => _ProfileAndRewardScreenState();
+  State<ProfileAndRewardScreen> createState() =>
+      _ProfileAndRewardScreenState();
 }
 
-class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
+class _ProfileAndRewardScreenState
+    extends State<ProfileAndRewardScreen> {
   static const Color _blue = Color(0xFF1565C0);
 
-  int jumlahKoin = 750;
+  final ReportService _reportService = ReportService();
+
+  int jumlahKoin = ReportService.totalKoin;
   String namaUser = 'Warga Desa Jatingarang';
   String lokasiUser = 'Desa Jatingarang';
   Uint8List? _fotoProfil;
@@ -42,7 +47,9 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Konfirmasi Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun?'),
+        content: const Text(
+          'Apakah Anda yakin ingin keluar dari akun?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -62,7 +69,9 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
 
     if (keluar == true && mounted) {
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        MaterialPageRoute(
+          builder: (_) => const LoginScreen(),
+        ),
         (route) => false,
       );
     }
@@ -70,10 +79,12 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
 
   void _pesan(String pesan, {bool error = false}) {
     if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(pesan),
-        backgroundColor: error ? Colors.red.shade700 : Colors.green.shade700,
+        backgroundColor:
+            error ? Colors.red.shade700 : Colors.green.shade700,
       ),
     );
   }
@@ -85,12 +96,21 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
         imageQuality: 80,
         maxWidth: 1000,
       );
+
       if (hasil == null) return;
+
       final bytes = await hasil.readAsBytes();
+
       if (!mounted) return;
-      setState(() => _fotoProfil = bytes);
+
+      setState(() {
+        _fotoProfil = bytes;
+      });
     } catch (e) {
-      _pesan('Foto tidak dapat diambil. Periksa izin kamera/galeri perangkat.', error: true);
+      _pesan(
+        'Foto tidak dapat diambil. Periksa izin kamera/galeri perangkat.',
+        error: true,
+      );
     }
   }
 
@@ -101,10 +121,16 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
         child: Wrap(
           children: [
             const ListTile(
-              title: Text('Ubah Foto Profil', style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                'Ubah Foto Profil',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_camera_outlined, color: _blue),
+              leading: const Icon(
+                Icons.photo_camera_outlined,
+                color: _blue,
+              ),
               title: const Text('Ambil dari kamera'),
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -112,7 +138,10 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: _blue),
+              leading: const Icon(
+                Icons.photo_library_outlined,
+                color: _blue,
+              ),
               title: const Text('Pilih dari galeri'),
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -121,11 +150,16 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
             ),
             if (_fotoProfil != null)
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                ),
                 title: const Text('Hapus foto profil'),
                 onTap: () {
                   Navigator.pop(sheetContext);
-                  setState(() => _fotoProfil = null);
+                  setState(() {
+                    _fotoProfil = null;
+                  });
                 },
               ),
           ],
@@ -144,63 +178,86 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
     }
 
     try {
-      final bool layananAktif = await Geolocator.isLocationServiceEnabled();
+      final bool layananAktif =
+          await Geolocator.isLocationServiceEnabled();
+
       if (!layananAktif) {
-        _pesan('GPS perangkat belum aktif. Aktifkan lokasi lalu coba lagi.', error: true);
+        _pesan(
+          'GPS perangkat belum aktif. Aktifkan lokasi lalu coba lagi.',
+          error: true,
+        );
         return null;
       }
 
-      LocationPermission izin = await Geolocator.checkPermission();
+      LocationPermission izin =
+          await Geolocator.checkPermission();
+
       if (izin == LocationPermission.denied) {
         izin = await Geolocator.requestPermission();
       }
 
       if (izin == LocationPermission.denied) {
-        _pesan('Izin lokasi ditolak. Izinkan akses lokasi untuk menggunakan GPS.', error: true);
+        _pesan(
+          'Izin lokasi ditolak. Izinkan akses lokasi untuk menggunakan GPS.',
+          error: true,
+        );
         return null;
       }
 
       if (izin == LocationPermission.deniedForever) {
-        _pesan('Izin lokasi ditolak permanen. Aktifkan melalui Pengaturan aplikasi.', error: true);
+        _pesan(
+          'Izin lokasi ditolak permanen. Aktifkan melalui Pengaturan aplikasi.',
+          error: true,
+        );
         return null;
       }
 
-      final Position posisi = await Geolocator.getCurrentPosition(
+      final Position posisi =
+          await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
         ),
       );
 
-      // Koordinat tetap menjadi alamat cadangan jika reverse geocoding gagal.
       String alamat =
-          '${posisi.latitude.toStringAsFixed(5)}, ${posisi.longitude.toStringAsFixed(5)}';
+          '${posisi.latitude.toStringAsFixed(5)}, '
+          '${posisi.longitude.toStringAsFixed(5)}';
 
       try {
         final geocoding = Geocoding();
-        final placemarks = await geocoding.placemarkFromCoordinates(
+
+        final placemarks =
+            await geocoding.placemarkFromCoordinates(
           posisi.latitude,
           posisi.longitude,
         );
 
         if (placemarks.isNotEmpty) {
           final p = placemarks.first;
+
           final bagian = <String?>[
             p.street,
             p.subLocality,
             p.locality,
             p.subAdministrativeArea,
             p.administrativeArea,
-          ].where((v) => v != null && v.trim().isNotEmpty).toList();
+          ]
+              .where(
+                (v) => v != null && v.trim().isNotEmpty,
+              )
+              .toList();
 
           if (bagian.isNotEmpty) {
             alamat = bagian.join(', ');
           }
         }
       } catch (_) {
-        // Jika alamat tidak berhasil diterjemahkan, gunakan koordinat GPS.
+        // Jika alamat gagal diterjemahkan,
+        // gunakan koordinat GPS sebagai cadangan.
       }
 
       if (!mounted) return null;
+
       return alamat;
     } catch (_) {
       if (mounted) {
@@ -209,155 +266,129 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
           error: true,
         );
       }
+
       return null;
     }
   }
 
   void _bukaDialogEditProfil() {
-    final nameController = TextEditingController(text: namaUser);
-    final locationController = TextEditingController(text: lokasiUser);
-    bool sedangMengambilLokasi = false;
-
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) => AlertDialog(
-          title: const Text(
-            'Edit Profil Warga',
-            style: TextStyle(
-              color: _blue,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Nama & Peran',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: locationController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Lokasi / Desa',
-                    prefixIcon: Icon(Icons.location_on_outlined),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: sedangMengambilLokasi
-                        ? null
-                        : () async {
-                            setDialogState(() {
-                              sedangMengambilLokasi = true;
-                            });
+      builder: (dialogContext) => _EditProfilDialog(
+        namaAwal: namaUser,
+        lokasiAwal: lokasiUser,
+        ambilLokasi: _ambilLokasi,
+        onSimpan: (namaBaru, lokasiBaru) {
+          if (!mounted) return;
 
-                            final alamat = await _ambilLokasi();
+          setState(() {
+            namaUser = namaBaru;
+            lokasiUser = lokasiBaru;
+          });
 
-                            // Jangan memperbarui dialog jika pengguna sudah menutupnya.
-                            if (!dialogContext.mounted) return;
-
-                            if (alamat != null && alamat.isNotEmpty) {
-                              locationController.text = alamat;
-                            }
-
-                            setDialogState(() {
-                              sedangMengambilLokasi = false;
-                            });
-                          },
-                    icon: sedangMengambilLokasi
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.my_location),
-                    label: Text(
-                      sedangMengambilLokasi
-                          ? 'Mengambil lokasi...'
-                          : 'Gunakan Lokasi Saya',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'GPS memerlukan izin lokasi dan layanan lokasi perangkat yang aktif.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _blue,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                final namaBaru = nameController.text.trim();
-                final lokasiBaru = locationController.text.trim();
-
-                if (namaBaru.isEmpty || lokasiBaru.isEmpty) {
-                  _pesan('Nama dan lokasi tidak boleh kosong.', error: true);
-                  return;
-                }
-
-                setState(() {
-                  namaUser = namaBaru;
-                  lokasiUser = lokasiBaru;
-                });
-
-                Navigator.pop(dialogContext);
-                _pesan('Profil berhasil diperbarui.');
-              },
-              child: const Text('Simpan'),
-            ),
-          ],
-        ),
+          _pesan('Profil berhasil diperbarui.');
+        },
       ),
-    ).then((_) {
-      nameController.dispose();
-      locationController.dispose();
-    });
+    );
   }
 
-  void _simulasiValidasiAdmin() {
-    setState(() {
-      jumlahKoin += 100;
-      riwayatList.insert(0, {
-        'title': 'Validasi Laporan Lingkungan (Admin)',
-        'date': 'Hari Ini',
-        'points': '+100 Poin',
-        'isPositive': true,
-      });
-    });
-    _pesan('Simulasi berhasil: +100 poin ditambahkan.');
-  }
+  // ============ KLAIM KOIN LAPORAN SELESAI ============
 
-  void _tukarVoucher({required String nama, required int biaya}) {
-    if (jumlahKoin < biaya) {
-      Navigator.pop(context);
-      _pesan('Koin Anda tidak cukup untuk menukar voucher ini.', error: true);
+  void _bukaKlaimLaporan() {
+    final laporan = _reportService.getCompletedUnclaimedReports();
+
+    if (laporan.isEmpty) {
+      _pesan('Belum ada laporan selesai yang bisa diklaim.');
       return;
     }
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Klaim Koin Laporan',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _blue,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...laporan.map(
+                (report) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                  ),
+                  title: Text(report.title),
+                  subtitle: Text('${report.id} • ${report.date}'),
+                  trailing: ElevatedButton(
+                    onPressed: () async {
+                      final berhasil = await _reportService.claimReward(report.id);
+
+                      if (!mounted || !sheetContext.mounted) return;
+
+                      if (berhasil) {
+                        setState(() {
+                          jumlahKoin = ReportService.totalKoin;
+                          riwayatList.insert(0, {
+                            'title': 'Klaim Koin Laporan ${report.id}',
+                            'date': 'Hari Ini',
+                            'points': '+1200 Poin',
+                            'isPositive': true,
+                          });
+                        });
+
+                        Navigator.pop(sheetContext);
+                        _pesan('Berhasil! Kamu mendapatkan 1.200 koin.');
+                      } else {
+                        Navigator.pop(sheetContext);
+                        _pesan(
+                          'Laporan sudah pernah diklaim atau belum selesai.',
+                          error: true,
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _blue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Klaim'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _tukarVoucher({
+    required String nama,
+    required int biaya,
+  }) {
+    if (jumlahKoin < biaya) {
+      Navigator.pop(context);
+      _pesan(
+        'Koin Anda tidak cukup untuk menukar voucher ini.',
+        error: true,
+      );
+      return;
+    }
+
     setState(() {
       jumlahKoin -= biaya;
+      ReportService.totalKoin = jumlahKoin;
+
       riwayatList.insert(0, {
         'title': 'Penukaran $nama',
         'date': 'Hari Ini',
@@ -365,6 +396,7 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
         'isPositive': false,
       });
     });
+
     Navigator.pop(context);
     _pesan('Penukaran voucher berhasil (simulasi).');
   }
@@ -373,7 +405,11 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
+      ),
       builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -381,13 +417,37 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Katalog Voucher Koperasi Desa (Kopdes)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _blue)),
+              const Text(
+                'Katalog Voucher Koperasi Desa (Kopdes)',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _blue,
+                ),
+              ),
               const SizedBox(height: 8),
-              const Text('Tukar koinmu dengan berbagai penawaran menarik:'),
+              const Text(
+                'Tukar koinmu dengan berbagai penawaran menarik:',
+              ),
               const SizedBox(height: 12),
-              _voucherTile('Voucher Sembako Desa', 'Rp 20.000', 500, Icons.shopping_basket_outlined),
-              _voucherTile('Voucher Belanja Kopdes', 'Rp 40.000', 1000, Icons.storefront_outlined),
-              _voucherTile('Voucher Produk Desa', 'Rp 30.000', 750, Icons.card_giftcard),
+              _voucherTile(
+                'Voucher Sembako Desa',
+                'Rp 20.000',
+                500,
+                Icons.shopping_basket_outlined,
+              ),
+              _voucherTile(
+                'Voucher Belanja Kopdes',
+                'Rp 40.000',
+                1000,
+                Icons.storefront_outlined,
+              ),
+              _voucherTile(
+                'Voucher Produk Desa',
+                'Rp 30.000',
+                750,
+                Icons.card_giftcard,
+              ),
             ],
           ),
         ),
@@ -395,15 +455,30 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
     );
   }
 
-  Widget _voucherTile(String nama, String nilai, int biaya, IconData ikon) {
+  Widget _voucherTile(
+    String nama,
+    String nilai,
+    int biaya,
+    IconData ikon,
+  ) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(ikon, color: _blue, size: 30),
+      leading: Icon(
+        ikon,
+        color: _blue,
+        size: 30,
+      ),
       title: Text('$nama ($nilai)'),
       subtitle: Text('Biaya: $biaya Poin'),
       trailing: ElevatedButton(
-        style: ElevatedButton.styleFrom(backgroundColor: _blue, foregroundColor: Colors.white),
-        onPressed: () => _tukarVoucher(nama: nama, biaya: biaya),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _blue,
+          foregroundColor: Colors.white,
+        ),
+        onPressed: () => _tukarVoucher(
+          nama: nama,
+          biaya: biaya,
+        ),
         child: const Text('Tukar'),
       ),
     );
@@ -422,7 +497,9 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
       ),
       child: Row(
         children: [
@@ -430,14 +507,34 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(date, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(
+                  date,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          Text(points, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isPositive ? Colors.green : Colors.red)),
+          Text(
+            points,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: isPositive ? Colors.green : Colors.red,
+            ),
+          ),
         ],
       ),
     );
@@ -448,23 +545,39 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('Profil & Koin Kopdes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Profil & Koin Kopdes',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: _blue,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
         actions: [
           PopupMenuButton<String>(
             tooltip: 'Menu lainnya',
-            icon: const Icon(Icons.more_vert, color: Colors.white),
+            icon: const Icon(
+              Icons.more_vert,
+              color: Colors.white,
+            ),
             onSelected: (value) {
-              if (value == 'logout') _konfirmasiLogout();
+              if (value == 'logout') {
+                _konfirmasiLogout();
+              }
             },
             itemBuilder: (context) => const [
               PopupMenuItem<String>(
                 value: 'logout',
                 child: Row(
                   children: [
-                    Icon(Icons.logout, color: Colors.red),
+                    Icon(
+                      Icons.logout,
+                      color: Colors.red,
+                    ),
                     SizedBox(width: 10),
                     Text('Logout'),
                   ],
@@ -487,8 +600,18 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.shade100, width: 1.5),
-                  boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.1), spreadRadius: 2, blurRadius: 5, offset: const Offset(0, 3))],
+                  border: Border.all(
+                    color: Colors.blue.shade100,
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withValues(alpha: 0.1),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -497,8 +620,16 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
                         CircleAvatar(
                           radius: 30,
                           backgroundColor: _blue,
-                          backgroundImage: _fotoProfil == null ? null : MemoryImage(_fotoProfil!),
-                          child: _fotoProfil == null ? const Icon(Icons.person, size: 35, color: Colors.white) : null,
+                          backgroundImage: _fotoProfil == null
+                              ? null
+                              : MemoryImage(_fotoProfil!),
+                          child: _fotoProfil == null
+                              ? const Icon(
+                                  Icons.person,
+                                  size: 35,
+                                  color: Colors.white,
+                                )
+                              : null,
                         ),
                         Positioned(
                           right: 0,
@@ -507,8 +638,15 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
                             onTap: _bukaPilihanFoto,
                             child: Container(
                               padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                              child: const Icon(Icons.camera_alt, size: 16, color: _blue),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                size: 16,
+                                color: _blue,
+                              ),
                             ),
                           ),
                         ),
@@ -519,15 +657,38 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(namaUser, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                          Text(
+                            namaUser,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
                           const SizedBox(height: 4),
-                          Text(lokasiUser, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                          Text(
+                            lokasiUser,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 13,
+                            ),
+                          ),
                           const SizedBox(height: 5),
-                          const Text('Ketuk untuk edit profil', style: TextStyle(color: _blue, fontSize: 11)),
+                          const Text(
+                            'Ketuk untuk edit profil',
+                            style: TextStyle(
+                              color: _blue,
+                              fontSize: 11,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.edit_outlined, color: _blue, size: 20),
+                    const Icon(
+                      Icons.edit_outlined,
+                      color: _blue,
+                      size: 20,
+                    ),
                   ],
                 ),
               ),
@@ -537,18 +698,50 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [_blue, Color(0xFF42A5F5)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                gradient: const LinearGradient(
+                  colors: [
+                    _blue,
+                    Color(0xFF42A5F5),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.blue.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 4))],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Total Koin Kopdes Anda', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                  const Text(
+                    'Total Koin Kopdes Anda',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('$jumlahKoin Poin', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                  Text(
+                    '$jumlahKoin Poin',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 12),
-                  const Text('Poin pada tampilan ini masih berupa data simulasi.', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  const Text(
+                    'Poin pada tampilan ini masih berupa data simulasi.',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -557,33 +750,246 @@ class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _bukaKatalogVoucher,
-                icon: const Icon(Icons.card_giftcard, color: Colors.white),
-                label: const Text('Buka Katalog Penukaran Voucher', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(backgroundColor: _blue, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                icon: const Icon(
+                  Icons.card_giftcard,
+                  color: Colors.white,
+                ),
+                label: const Text(
+                  'Buka Katalog Penukaran Voucher',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _blue,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: _simulasiValidasiAdmin,
-                icon: const Icon(Icons.check_circle_outline, color: _blue),
-                label: const Text('Simulasi Laporan Divalidasi Admin (+100 Poin)', style: TextStyle(color: _blue, fontWeight: FontWeight.bold)),
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: _blue), padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                onPressed: _bukaKlaimLaporan,
+                icon: const Icon(
+                  Icons.check_circle_outline,
+                  color: _blue,
+                ),
+                label: const Text(
+                  'Klaim Koin dari Laporan Selesai',
+                  style: TextStyle(
+                    color: _blue,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: _blue),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 24),
-            const Text('Riwayat & Aktivitas Koin', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+            const Text(
+              'Riwayat & Aktivitas Koin',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
             const SizedBox(height: 12),
-            ...riwayatList.map((item) => _buildRiwayatCard(
-                  title: item['title'].toString(),
-                  date: item['date'].toString(),
-                  points: item['points'].toString(),
-                  isPositive: item['isPositive'] as bool,
-                )),
+            ...riwayatList.map(
+              (item) => _buildRiwayatCard(
+                title: item['title'].toString(),
+                date: item['date'].toString(),
+                points: item['points'].toString(),
+                isPositive: item['isPositive'] as bool,
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+// Dialog edit profil dipisahkan agar controller
+// hanya di-dispose ketika widget dialog selesai digunakan.
+
+class _EditProfilDialog extends StatefulWidget {
+  final String namaAwal;
+  final String lokasiAwal;
+  final Future<String?> Function() ambilLokasi;
+  final void Function(String nama, String lokasi) onSimpan;
+
+  const _EditProfilDialog({
+    required this.namaAwal,
+    required this.lokasiAwal,
+    required this.ambilLokasi,
+    required this.onSimpan,
+  });
+
+  @override
+  State<_EditProfilDialog> createState() =>
+      _EditProfilDialogState();
+}
+
+class _EditProfilDialogState extends State<_EditProfilDialog> {
+  late final TextEditingController nameController;
+  late final TextEditingController locationController;
+
+  bool sedangMengambilLokasi = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    nameController = TextEditingController(
+      text: widget.namaAwal,
+    );
+
+    locationController = TextEditingController(
+      text: widget.lokasiAwal,
+    );
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    locationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _gunakanLokasi() async {
+    setState(() {
+      sedangMengambilLokasi = true;
+    });
+
+    try {
+      final alamat = await widget.ambilLokasi();
+
+      if (!mounted) return;
+
+      if (alamat != null && alamat.isNotEmpty) {
+        locationController.text = alamat;
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          sedangMengambilLokasi = false;
+        });
+      }
+    }
+  }
+
+  void _simpanProfil() {
+    final namaBaru = nameController.text.trim();
+    final lokasiBaru = locationController.text.trim();
+
+    if (namaBaru.isEmpty || lokasiBaru.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nama dan lokasi tidak boleh kosong.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    widget.onSimpan(namaBaru, lokasiBaru);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text(
+        'Edit Profil Warga',
+        style: TextStyle(
+          color: Color(0xFF1565C0),
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                labelText: 'Nama & Peran',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: locationController,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                labelText: 'Lokasi / Desa',
+                prefixIcon: Icon(Icons.location_on_outlined),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: sedangMengambilLokasi
+                    ? null
+                    : _gunakanLokasi,
+                icon: sedangMengambilLokasi
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.my_location),
+                label: Text(
+                  sedangMengambilLokasi
+                      ? 'Mengambil lokasi...'
+                      : 'Gunakan Lokasi Saya',
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'GPS memerlukan izin lokasi dan layanan lokasi perangkat yang aktif.',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
+        ElevatedButton(
+          onPressed: _simpanProfil,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF1565C0),
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Simpan'),
+        ),
+      ],
     );
   }
 }
