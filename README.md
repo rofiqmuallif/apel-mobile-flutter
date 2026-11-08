@@ -1,17 +1,21 @@
-# aplikasia01
+# 🍎 APEL - Aplikasi Pelaporan Lingkungan
 
-A new Flutter project.
+Aplikasi mobile berbasis Flutter untuk pelaporan masalah lingkungan desa (khususnya Desa Jatingarang, Kec. Bayan, Purworejo) berbasis crowdsourcing, geotagging, dan gamifikasi lokal.
 
-## Getting Started
+## 👥 Tim Pengembang (Kelas A - IT UM Purworejo)
+* **Rofiq Muallif** (242520020) - Lead Developer & Admin Dashboard Specialist
+* **Maulana Ifandika / Dika** (242520060) - Mobile Feature Specialist (Form Lapor, Camera & GPS)
+* **Deva Aditya Lazuardi** (242520027) - Backend Engineer & Status Tracking Integration
+* **Nofal** (242520002) - System Analyst, QA Testing & Koin Kopdes Module
 
-This project is a starting point for a Flutter application.
+## 📱 Fitur Utama (MVP & Development)
+* **Autentikasi User**: Login & Register Multi-Role (Warga & Admin Desa)
+* **Dashboard Admin Desa**: Ringkasan statistik laporan, filter status (Baru, Diproses, Selesai), dan verifikasi tindakan lapangan
+* **Form Pelaporan Warga**: Upload foto bukti, geotagging GPS lokasi otomatis, dan skala gangguan (1-5)
+* **Status Tracking**: Progress timeline penanganan laporan secara transparan
+* **Koin Kopdes**: Gamifikasi koin reward untuk penukaran voucher Koperasi Desa
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🛠️ Cara Menjalankan Project
+```bash
+flutter pub get
+flutter run
