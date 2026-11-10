@@ -4,18 +4,17 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:apel_app/services/report_service.dart';
+
 import '../auth/login_screen.dart';
 
 class ProfileAndRewardScreen extends StatefulWidget {
   const ProfileAndRewardScreen({super.key});
 
   @override
-  State<ProfileAndRewardScreen> createState() =>
-      _ProfileAndRewardScreenState();
+  State<ProfileAndRewardScreen> createState() => _ProfileAndRewardScreenState();
 }
 
-class _ProfileAndRewardScreenState
-    extends State<ProfileAndRewardScreen> {
+class _ProfileAndRewardScreenState extends State<ProfileAndRewardScreen> {
   static const Color _blue = Color(0xFF1565C0);
 
   final ReportService _reportService = ReportService();
@@ -47,9 +46,7 @@ class _ProfileAndRewardScreenState
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Konfirmasi Logout'),
-        content: const Text(
-          'Apakah Anda yakin ingin keluar dari akun?',
-        ),
+        content: const Text('Apakah Anda yakin ingin keluar dari akun?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -69,9 +66,7 @@ class _ProfileAndRewardScreenState
 
     if (keluar == true && mounted) {
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) => const LoginScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
         (route) => false,
       );
     }
@@ -83,8 +78,7 @@ class _ProfileAndRewardScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(pesan),
-        backgroundColor:
-            error ? Colors.red.shade700 : Colors.green.shade700,
+        backgroundColor: error ? Colors.red.shade700 : Colors.green.shade700,
       ),
     );
   }
@@ -127,10 +121,7 @@ class _ProfileAndRewardScreenState
               ),
             ),
             ListTile(
-              leading: const Icon(
-                Icons.photo_camera_outlined,
-                color: _blue,
-              ),
+              leading: const Icon(Icons.photo_camera_outlined, color: _blue),
               title: const Text('Ambil dari kamera'),
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -138,10 +129,7 @@ class _ProfileAndRewardScreenState
               },
             ),
             ListTile(
-              leading: const Icon(
-                Icons.photo_library_outlined,
-                color: _blue,
-              ),
+              leading: const Icon(Icons.photo_library_outlined, color: _blue),
               title: const Text('Pilih dari galeri'),
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -150,10 +138,7 @@ class _ProfileAndRewardScreenState
             ),
             if (_fotoProfil != null)
               ListTile(
-                leading: const Icon(
-                  Icons.delete_outline,
-                  color: Colors.red,
-                ),
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
                 title: const Text('Hapus foto profil'),
                 onTap: () {
                   Navigator.pop(sheetContext);
@@ -178,8 +163,7 @@ class _ProfileAndRewardScreenState
     }
 
     try {
-      final bool layananAktif =
-          await Geolocator.isLocationServiceEnabled();
+      final bool layananAktif = await Geolocator.isLocationServiceEnabled();
 
       if (!layananAktif) {
         _pesan(
@@ -189,8 +173,7 @@ class _ProfileAndRewardScreenState
         return null;
       }
 
-      LocationPermission izin =
-          await Geolocator.checkPermission();
+      LocationPermission izin = await Geolocator.checkPermission();
 
       if (izin == LocationPermission.denied) {
         izin = await Geolocator.requestPermission();
@@ -212,8 +195,7 @@ class _ProfileAndRewardScreenState
         return null;
       }
 
-      final Position posisi =
-          await Geolocator.getCurrentPosition(
+      final Position posisi = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
         ),
@@ -226,8 +208,7 @@ class _ProfileAndRewardScreenState
       try {
         final geocoding = Geocoding();
 
-        final placemarks =
-            await geocoding.placemarkFromCoordinates(
+        final placemarks = await geocoding.placemarkFromCoordinates(
           posisi.latitude,
           posisi.longitude,
         );
@@ -241,11 +222,7 @@ class _ProfileAndRewardScreenState
             p.locality,
             p.subAdministrativeArea,
             p.administrativeArea,
-          ]
-              .where(
-                (v) => v != null && v.trim().isNotEmpty,
-              )
-              .toList();
+          ].where((v) => v != null && v.trim().isNotEmpty).toList();
 
           if (bagian.isNotEmpty) {
             alamat = bagian.join(', ');
@@ -324,15 +301,14 @@ class _ProfileAndRewardScreenState
               ...laporan.map(
                 (report) => ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                  ),
+                  leading: const Icon(Icons.check_circle, color: Colors.green),
                   title: Text(report.title),
                   subtitle: Text('${report.id} • ${report.date}'),
                   trailing: ElevatedButton(
                     onPressed: () async {
-                      final berhasil = await _reportService.claimReward(report.id);
+                      final berhasil = await _reportService.claimReward(
+                        report.id,
+                      );
 
                       if (!mounted || !sheetContext.mounted) return;
 
@@ -372,16 +348,10 @@ class _ProfileAndRewardScreenState
     );
   }
 
-  void _tukarVoucher({
-    required String nama,
-    required int biaya,
-  }) {
+  void _tukarVoucher({required String nama, required int biaya}) {
     if (jumlahKoin < biaya) {
       Navigator.pop(context);
-      _pesan(
-        'Koin Anda tidak cukup untuk menukar voucher ini.',
-        error: true,
-      );
+      _pesan('Koin Anda tidak cukup untuk menukar voucher ini.', error: true);
       return;
     }
 
@@ -406,9 +376,7 @@ class _ProfileAndRewardScreenState
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(20),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) => SafeArea(
         child: Padding(
@@ -426,9 +394,7 @@ class _ProfileAndRewardScreenState
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Tukar koinmu dengan berbagai penawaran menarik:',
-              ),
+              const Text('Tukar koinmu dengan berbagai penawaran menarik:'),
               const SizedBox(height: 12),
               _voucherTile(
                 'Voucher Sembako Desa',
@@ -455,19 +421,10 @@ class _ProfileAndRewardScreenState
     );
   }
 
-  Widget _voucherTile(
-    String nama,
-    String nilai,
-    int biaya,
-    IconData ikon,
-  ) {
+  Widget _voucherTile(String nama, String nilai, int biaya, IconData ikon) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(
-        ikon,
-        color: _blue,
-        size: 30,
-      ),
+      leading: Icon(ikon, color: _blue, size: 30),
       title: Text('$nama ($nilai)'),
       subtitle: Text('Biaya: $biaya Poin'),
       trailing: ElevatedButton(
@@ -475,10 +432,7 @@ class _ProfileAndRewardScreenState
           backgroundColor: _blue,
           foregroundColor: Colors.white,
         ),
-        onPressed: () => _tukarVoucher(
-          nama: nama,
-          biaya: biaya,
-        ),
+        onPressed: () => _tukarVoucher(nama: nama, biaya: biaya),
         child: const Text('Tukar'),
       ),
     );
@@ -497,9 +451,7 @@ class _ProfileAndRewardScreenState
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
         children: [
@@ -518,10 +470,7 @@ class _ProfileAndRewardScreenState
                 const SizedBox(height: 4),
                 Text(
                   date,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ],
             ),
@@ -547,43 +496,16 @@ class _ProfileAndRewardScreenState
       appBar: AppBar(
         title: const Text(
           'Profil & Koin Kopdes',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: _blue,
         elevation: 0,
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          PopupMenuButton<String>(
-            tooltip: 'Menu lainnya',
-            icon: const Icon(
-              Icons.more_vert,
-              color: Colors.white,
-            ),
-            onSelected: (value) {
-              if (value == 'logout') {
-                _konfirmasiLogout();
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem<String>(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.logout,
-                      color: Colors.red,
-                    ),
-                    SizedBox(width: 10),
-                    Text('Logout'),
-                  ],
-                ),
-              ),
-            ],
+          IconButton(
+            tooltip: 'Logout',
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: _konfirmasiLogout,
           ),
         ],
       ),
@@ -600,10 +522,7 @@ class _ProfileAndRewardScreenState
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.blue.shade100,
-                    width: 1.5,
-                  ),
+                  border: Border.all(color: Colors.blue.shade100, width: 1.5),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.grey.withValues(alpha: 0.1),
@@ -676,19 +595,12 @@ class _ProfileAndRewardScreenState
                           const SizedBox(height: 5),
                           const Text(
                             'Ketuk untuk edit profil',
-                            style: TextStyle(
-                              color: _blue,
-                              fontSize: 11,
-                            ),
+                            style: TextStyle(color: _blue, fontSize: 11),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(
-                      Icons.edit_outlined,
-                      color: _blue,
-                      size: 20,
-                    ),
+                    const Icon(Icons.edit_outlined, color: _blue, size: 20),
                   ],
                 ),
               ),
@@ -699,10 +611,7 @@ class _ProfileAndRewardScreenState
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [
-                    _blue,
-                    Color(0xFF42A5F5),
-                  ],
+                  colors: [_blue, Color(0xFF42A5F5)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -720,10 +629,7 @@ class _ProfileAndRewardScreenState
                 children: [
                   const Text(
                     'Total Koin Kopdes Anda',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -737,10 +643,7 @@ class _ProfileAndRewardScreenState
                   const SizedBox(height: 12),
                   const Text(
                     'Poin pada tampilan ini masih berupa data simulasi.',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
               ),
@@ -750,10 +653,7 @@ class _ProfileAndRewardScreenState
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _bukaKatalogVoucher,
-                icon: const Icon(
-                  Icons.card_giftcard,
-                  color: Colors.white,
-                ),
+                icon: const Icon(Icons.card_giftcard, color: Colors.white),
                 label: const Text(
                   'Buka Katalog Penukaran Voucher',
                   style: TextStyle(
@@ -763,9 +663,7 @@ class _ProfileAndRewardScreenState
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _blue,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -777,22 +675,14 @@ class _ProfileAndRewardScreenState
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: _bukaKlaimLaporan,
-                icon: const Icon(
-                  Icons.check_circle_outline,
-                  color: _blue,
-                ),
+                icon: const Icon(Icons.check_circle_outline, color: _blue),
                 label: const Text(
                   'Klaim Koin dari Laporan Selesai',
-                  style: TextStyle(
-                    color: _blue,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(color: _blue, fontWeight: FontWeight.bold),
                 ),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: _blue),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -841,8 +731,7 @@ class _EditProfilDialog extends StatefulWidget {
   });
 
   @override
-  State<_EditProfilDialog> createState() =>
-      _EditProfilDialogState();
+  State<_EditProfilDialog> createState() => _EditProfilDialogState();
 }
 
 class _EditProfilDialogState extends State<_EditProfilDialog> {
@@ -855,13 +744,9 @@ class _EditProfilDialogState extends State<_EditProfilDialog> {
   void initState() {
     super.initState();
 
-    nameController = TextEditingController(
-      text: widget.namaAwal,
-    );
+    nameController = TextEditingController(text: widget.namaAwal);
 
-    locationController = TextEditingController(
-      text: widget.lokasiAwal,
-    );
+    locationController = TextEditingController(text: widget.lokasiAwal);
   }
 
   @override
@@ -916,10 +801,7 @@ class _EditProfilDialogState extends State<_EditProfilDialog> {
     return AlertDialog(
       title: const Text(
         'Edit Profil Warga',
-        style: TextStyle(
-          color: Color(0xFF1565C0),
-          fontWeight: FontWeight.bold,
-        ),
+        style: TextStyle(color: Color(0xFF1565C0), fontWeight: FontWeight.bold),
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -946,16 +828,12 @@ class _EditProfilDialogState extends State<_EditProfilDialog> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: sedangMengambilLokasi
-                    ? null
-                    : _gunakanLokasi,
+                onPressed: sedangMengambilLokasi ? null : _gunakanLokasi,
                 icon: sedangMengambilLokasi
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.my_location),
                 label: Text(
@@ -968,10 +846,7 @@ class _EditProfilDialogState extends State<_EditProfilDialog> {
             const SizedBox(height: 4),
             const Text(
               'GPS memerlukan izin lokasi dan layanan lokasi perangkat yang aktif.',
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 11, color: Colors.grey),
             ),
           ],
         ),
